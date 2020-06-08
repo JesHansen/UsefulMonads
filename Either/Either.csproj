@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard1.0</TargetFramework>
+    <RootNamespace>JesHansen.Monads</RootNamespace>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <PackageId>JesHansen.Monads</PackageId>
+    <Authors>Jes Bak Hansen</Authors>
+    <Company />
+    <Product>Monads for .NET</Product>
+    <Description>A collection of actually useful monads for .NET</Description>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageTags>monad either maybe</PackageTags>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <DocumentationFile>G:\Frigg\Dokumenter\src\UsefulMonads\Either\Either.xml</DocumentationFile>
+  </PropertyGroup>
+
+</Project>
