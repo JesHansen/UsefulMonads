@@ -1,4 +1,4 @@
-=Actually useful monads for .NET=
+==Actually useful monads for .NET==
 This is a collection of monads that I'd actually use in production code.
 
 You can express many monads in C#, but not all of them are useful, as idiomatic C# would have you do things another way. 
