@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace JesHansen.Monads
+namespace UsefulMonads
 {
 
   /// <summary>
@@ -165,7 +165,7 @@ namespace JesHansen.Monads
     /// </summary>
     /// <param name="other">The object to compare with the current object.</param>
     /// <returns>true if the specified object  is equal to the current object; otherwise, false.</returns>
-    public bool Equals(Either<TError, TOk> other)
+    public bool Equals(Either<TError, TOk>? other)
     {
       if (other is null)
       {
@@ -183,8 +183,8 @@ namespace JesHansen.Monads
       }
 
       return isError
-                 ? Failure.Value.Equals(other.Failure.Value)
-                 : Ok.Value.Equals(other.Ok.Value);
+                 ? Failure.Value!.Equals(other.Failure.Value)
+                 : Ok.Value!.Equals(other.Ok.Value);
     }
 
     /// <summary>
@@ -192,7 +192,7 @@ namespace JesHansen.Monads
     /// </summary>
     /// <param name="obj">The object to compare with the current <see cref="Either{TError,TOk}"/> object.</param>
     /// <returns>true if the specified object  is equal to the current object; otherwise, false.</returns>
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
       if (obj is null)
       {
@@ -213,20 +213,7 @@ namespace JesHansen.Monads
     /// <returns>A hash code for the current <see cref="Either{TError,TOk}"/>.</returns>
     public override int GetHashCode()
     {
-      unchecked
-      {
-        var hashCode = isError.GetHashCode();
-        if (isError)
-        {
-          hashCode = (hashCode * 397) ^ Failure.Value.GetHashCode();
-        }
-        else
-        {
-          hashCode = (hashCode * 397) ^ Ok.Value.GetHashCode();
-        }
-
-        return hashCode;
-      }
+      return isError ? HashCode.Combine(isError, Failure.Value) : HashCode.Combine(isError, Ok.Value);
     }
 
     /// <summary>

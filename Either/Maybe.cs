@@ -1,43 +1,37 @@
 ﻿using System;
 
 
-namespace JesHansen.Monads
+namespace UsefulMonads
 {
   /// <summary>
   /// Represents a value that may or may not be available
   /// </summary>
   /// <typeparam name="T">The type of the value that may be available</typeparam>
-  public struct Maybe<T> : IEquatable<Maybe<T>>
+  public class Maybe<T> : IEquatable<Maybe<T>>
   {
     // There is only one empty Maybe (per type), so reuse it.
-    private static readonly Lazy<Maybe<T>> EmptyInstance = new Lazy<Maybe<T>>(() => new Maybe<T>());
+    private static readonly Lazy<Maybe<T>> EmptyInstance = new(() => new Maybe<T>(default));
 
     /// <summary>
     /// TODO
     /// </summary>
-    public static Maybe<T> Empty => EmptyInstance.Value;
+    private static Maybe<T> Empty => EmptyInstance.Value;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="Maybe{T}"/> struct. If the value provided is null the maybe will be empty.
     /// </summary>
     /// <param name="input">The input value to wrap.</param>
-    public Maybe(T input)
+    private Maybe(T? input)
     {
-      if (input == null)
-      {
-        HasValue = false;
-        Value = default;
-      }
-      else
-      {
-        Value = input;
-        HasValue = true;
-      }
+      Value = input ?? default;
     }
 
-    private T Value { get; }
-
-    private bool HasValue { get; }
+    public static Maybe<T> Create(T? item)
+    {
+      return item == null ? Empty : new Maybe<T>(item);
+    }
+    
+    private T? Value { get; }
 
     /// <summary>
     /// Resolve the Maybe value to a value.
@@ -54,7 +48,7 @@ namespace JesHansen.Monads
         throw new ArgumentNullException(nameof(onValuePresent));
       }
 
-      return !HasValue ? fallbackValue : onValuePresent(Value);
+      return Value != null ? onValuePresent(Value) : fallbackValue;
     }
 
     /// <summary>
@@ -74,7 +68,7 @@ namespace JesHansen.Monads
         throw new ArgumentNullException(nameof(onValuePresent));
       }
 
-      if (HasValue)
+      if (Value != null)
       {
         onValuePresent(Value);
       }
@@ -97,7 +91,7 @@ namespace JesHansen.Monads
         throw new ArgumentNullException(nameof(selector));
       }
 
-      return !HasValue ? new Maybe<R>() : new Maybe<R>(selector(Value));
+      return Value == null ? new Maybe<R>(default) : new Maybe<R>(selector(Value));
     }
 
     /// <summary>
@@ -121,7 +115,7 @@ namespace JesHansen.Monads
         throw new ArgumentNullException(nameof(f));
       }
 
-      return !HasValue ? new Maybe<R>() : f(Value);
+      return Value == null ? new Maybe<R>(default) : f(Value);
     }
 
     /// <summary>
@@ -148,59 +142,39 @@ namespace JesHansen.Monads
       // Lambdas inside structs do not have access to this.variableName,
       // so we make a reference to it here instead.
       var value = Value;
-      return !HasValue
-                 ? new Maybe<F>()
+      return value == null
+                 ? new Maybe<F>(default)
                  : maybeSelector(value).Bind(r => new Maybe<F>(resultSelector(value, r)));
     }
 
 
     /// <inheritdoc />
-    public override bool Equals(object obj)
+    public override bool Equals(object? obj)
     {
-      switch (obj)
+      return obj switch
       {
-        case null:
-          return !HasValue;
-        case Maybe<T> maybe:
-          return Equals(maybe);
-        case T valueType:
-          return Equals(valueType);
-        default:
-          return false;
-      }
+        null => Value == null,
+        Maybe<T> maybe => Equals(maybe),
+        _ => false
+      };
     }
 
     /// <inheritdoc />
     public override int GetHashCode()
     {
-      return HasValue ? Value.GetHashCode() : 0;
+      return HashCode.Combine(Value);
     }
 
     /// <inheritdoc />
-    public bool Equals(Maybe<T> other)
+    public bool Equals(Maybe<T>? other)
     {
-      if (HasValue && other.HasValue)
-      {
+      if (null == other)
+        return false;
+      if (Value != null && other.Value != null)
         return Value.Equals(other.Value);
-      }
-      return !HasValue && !other.HasValue;
+
+      return Value == null && other.Value == null;
     }
-
-    /// <summary>
-    /// Determines if two <see cref="Maybe{T}"/> instances are equal
-    /// </summary>
-    /// <param name="lhs">First instance</param>
-    /// <param name="rhs">Second instance</param>
-    /// <returns><c>true</c> if the two instances are equal</returns>
-    public static bool operator ==(Maybe<T> lhs, Maybe<T> rhs) => lhs.Equals(rhs);
-
-    /// <summary>
-    /// Determines if two <see cref="Maybe{T}"/> instances are not equal
-    /// </summary>
-    /// <param name="lhs">First instance</param>
-    /// <param name="rhs">Second instance</param>
-    /// <returns><c>true</c> if the two instances are not equal</returns>
-    public static bool operator !=(Maybe<T> lhs, Maybe<T> rhs) => !lhs.Equals(rhs);
 
     /// <summary>
     /// Unwrap a nested <see cref="Maybe{T}"/>
@@ -209,7 +183,11 @@ namespace JesHansen.Monads
     /// <returns>The innermost <see cref="Maybe{T}"/></returns>
     public static Maybe<T> Unwrap(Maybe<Maybe<T>> doubleWrapped)
     {
-      return !doubleWrapped.HasValue ? Empty : doubleWrapped.Value;
+      var inner = doubleWrapped.Value;
+      if (inner == null)
+        return Empty;
+
+      return inner.Value == null ? Empty : inner;
     }
 
   }
@@ -222,7 +200,7 @@ namespace JesHansen.Monads
     /// <summary>
     /// Wraps the given value in a Maybe for that type
     /// </summary>
-    public static Maybe<T> ToMaybe<T>(this T input) => new Maybe<T>(input);
+    public static Maybe<T> ToMaybe<T>(this T input) => Maybe<T>.Create(input);
 
     /// <summary>
     /// TODO

@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace JesHansen.Monads
+namespace UsefulMonads
 {
   /// <summary>
   /// Extension methods for the <see cref="Either{TError,TOk}"/> type.

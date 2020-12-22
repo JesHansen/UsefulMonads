@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <RootNamespace>JesHansen.Monads</RootNamespace>
+    <RootNamespace>UsefulMonads</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageId>JesHansen.Monads</PackageId>
     <Authors>Jes Bak Hansen</Authors>
