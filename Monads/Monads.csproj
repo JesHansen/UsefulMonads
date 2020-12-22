@@ -4,7 +4,7 @@
     <TargetFramework>net5.0</TargetFramework>
     <RootNamespace>UsefulMonads</RootNamespace>
     <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
-    <PackageId>JesHansen.Monads</PackageId>
+    <PackageId>UsefulMonads</PackageId>
     <Authors>Jes Bak Hansen</Authors>
     <Product>Monads for .NET</Product>
     <Description>A collection of actually useful monads for .NET</Description>
