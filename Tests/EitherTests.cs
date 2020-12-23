@@ -1,6 +1,6 @@
 ﻿using System;
 using FluentAssertions;
-using UsefulMonads;
+using UsefulMonads.Either;
 using Xunit;
 
 namespace Tests
