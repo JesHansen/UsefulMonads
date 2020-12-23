@@ -10,7 +10,7 @@ namespace UsefulMonads.Maybe
   public class Maybe<T> : IEquatable<Maybe<T>>
   {
     // There is only one empty Maybe (per type), so reuse it.
-    private static readonly Lazy<Maybe<T>> EmptyInstance = new(() => new Maybe<T>(default));
+    private static readonly Lazy<Maybe<T>> EmptyInstance = new(() => new Maybe<T>(default) {hasValue = false});
 
     /// <summary>
     /// TODO
@@ -42,7 +42,7 @@ namespace UsefulMonads.Maybe
 
     public static Maybe<T> Create()
     {
-      return new(default) {hasValue = false};
+      return Empty;
     }
 
     private T? Value { get; }
@@ -165,7 +165,7 @@ namespace UsefulMonads.Maybe
     {
       return obj switch
       {
-        null => Value == null,
+        null => false,
         Maybe<T> maybe => Equals(maybe),
         _ => false
       };
@@ -186,8 +186,16 @@ namespace UsefulMonads.Maybe
         return Value!.Equals(other.Value);
       return hasValue == other.hasValue;
     }
-    
-    
+
+    public static bool operator ==(Maybe<T>? left, Maybe<T>? right)
+    {
+      return Equals(left, right);
+    }
+
+    public static bool operator !=(Maybe<T>? left, Maybe<T>? right)
+    {
+      return !Equals(left, right);
+    }
   }
 
   /// <summary>
@@ -199,13 +207,5 @@ namespace UsefulMonads.Maybe
     /// Wraps the given value in a Maybe for that type
     /// </summary>
     public static Maybe<T> ToMaybe<T>(this T input) => Maybe<T>.Create(input);
-
-    /// <summary>
-    /// TODO
-    /// </summary>
-    /// <param name="input"></param>
-    /// <typeparam name="T"></typeparam>
-    /// <returns></returns>
-    public static Maybe<T> Clone<T>(this Maybe<T> input) => input.Map(x => x);
   }
 }
