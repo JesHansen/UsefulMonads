@@ -1,12 +1,21 @@
 using System;
+using System.Threading.Channels;
 using FluentAssertions;
-using UsefulMonads;
+using UsefulMonads.Maybe;
 using Xunit;
+using Xunit.Abstractions;
 
 namespace Tests
 {
   public class MaybeTests
   {
+    private readonly ITestOutputHelper testOutputHelper;
+
+    public MaybeTests(ITestOutputHelper testOutputHelper)
+    {
+      this.testOutputHelper = testOutputHelper;
+    }
+
     [Fact]
     public void TestResolve()
     {
@@ -46,8 +55,8 @@ namespace Tests
       sut1.Equals(actual1).Should().BeTrue();
       sut1.Equals(null).Should().BeFalse();
       
-      var sut2 = Maybe<int?>.Create(default);
-      var actual2 = Maybe<int?>.Create(default);
+      var sut2 = Maybe<int?>.Create();
+      var actual2 = Maybe<int?>.Create();
       sut2.Equals(actual2).Should().BeTrue();
     }
 
@@ -104,6 +113,30 @@ namespace Tests
         select s2 ? s3 * s1 : 0;
 
       q.Resolve(0, x => x).Should().BeApproximately(731.64, 0.0001);
+    }
+
+    [Fact]
+    public void TestEmpties()
+    {
+      Maybe<int> sut1 = Maybe<int>.Create();
+      Maybe<int> sut2 = Maybe<int>.Create(2);
+      Maybe<int?> sut3 = Maybe<int?>.Create(null);
+      Maybe<int?> sut4 = Maybe<int?>.Create(33);
+      Maybe<int?> sut5 = Maybe<int?>.Create();
+
+      void NoValue() => testOutputHelper.WriteLine("Nothing");
+      void Gotone(int i) => testOutputHelper.WriteLine($"We got one: {i}!");
+      void Gotoneagain(int? i) => testOutputHelper.WriteLine($"We got one: HasValue: {i.HasValue}, Value: {i.Value}!");
+
+      sut1.Do(NoValue, Gotone);
+      sut2.Do(NoValue, Gotone);
+      sut3.Do(NoValue, Gotoneagain);
+      sut4.Do(NoValue, Gotoneagain);
+      sut5.Do(NoValue, Gotoneagain);
+      
+      
+
+
     }
   }
 }

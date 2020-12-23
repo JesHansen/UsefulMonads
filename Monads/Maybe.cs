@@ -1,7 +1,7 @@
 ﻿using System;
 
 
-namespace UsefulMonads
+namespace UsefulMonads.Maybe
 {
   /// <summary>
   /// Represents a value that may or may not be available
@@ -23,15 +23,30 @@ namespace UsefulMonads
     /// <param name="input">The input value to wrap.</param>
     private Maybe(T? input)
     {
-      Value = input ?? default;
+      if (input is null)
+      {
+        hasValue = false;
+        Value = default;
+      }
+      else
+      {
+        hasValue = true;
+        Value = input;
+      }
     }
 
     public static Maybe<T> Create(T? item)
     {
       return item == null ? Empty : new Maybe<T>(item);
     }
-    
+
+    public static Maybe<T> Create()
+    {
+      return new(default) {hasValue = false};
+    }
+
     private T? Value { get; }
+    private bool hasValue = false;
 
     /// <summary>
     /// Resolve the Maybe value to a value.
@@ -48,7 +63,7 @@ namespace UsefulMonads
         throw new ArgumentNullException(nameof(onValuePresent));
       }
 
-      return Value != null ? onValuePresent(Value) : fallbackValue;
+      return hasValue ? onValuePresent(Value!) : fallbackValue;
     }
 
     /// <summary>
@@ -68,9 +83,9 @@ namespace UsefulMonads
         throw new ArgumentNullException(nameof(onValuePresent));
       }
 
-      if (Value != null)
+      if (hasValue)
       {
-        onValuePresent(Value);
+        onValuePresent(Value!);
       }
       else
       {
@@ -91,7 +106,7 @@ namespace UsefulMonads
         throw new ArgumentNullException(nameof(selector));
       }
 
-      return Value == null ? new Maybe<R>(default) : new Maybe<R>(selector(Value));
+      return hasValue ? new Maybe<R>(selector(Value!)) : Maybe<R>.Empty;
     }
 
     /// <summary>
@@ -115,7 +130,7 @@ namespace UsefulMonads
         throw new ArgumentNullException(nameof(f));
       }
 
-      return Value == null ? new Maybe<R>(default) : f(Value);
+      return hasValue ? f(Value!) : Maybe<R>.Empty;
     }
 
     /// <summary>
@@ -139,12 +154,9 @@ namespace UsefulMonads
         throw new ArgumentNullException(nameof(resultSelector));
       }
 
-      // Lambdas inside structs do not have access to this.variableName,
-      // so we make a reference to it here instead.
-      var value = Value;
-      return value == null
-                 ? new Maybe<F>(default)
-                 : maybeSelector(value).Bind(r => new Maybe<F>(resultSelector(value, r)));
+      return hasValue
+            ? maybeSelector(Value!).Bind(r => new Maybe<F>(resultSelector(Value!, r)))
+            : Maybe<F>.Empty;
     }
 
 
@@ -170,26 +182,12 @@ namespace UsefulMonads
     {
       if (null == other)
         return false;
-      if (Value != null && other.Value != null)
-        return Value.Equals(other.Value);
-
-      return Value == null && other.Value == null;
+      if (hasValue && other.hasValue)
+        return Value!.Equals(other.Value);
+      return hasValue == other.hasValue;
     }
-
-    /// <summary>
-    /// Unwrap a nested <see cref="Maybe{T}"/>
-    /// </summary>
-    /// <param name="doubleWrapped">A nested <see cref="Maybe{T}"/></param>
-    /// <returns>The innermost <see cref="Maybe{T}"/></returns>
-    public static Maybe<T> Unwrap(Maybe<Maybe<T>> doubleWrapped)
-    {
-      var inner = doubleWrapped.Value;
-      if (inner == null)
-        return Empty;
-
-      return inner.Value == null ? Empty : inner;
-    }
-
+    
+    
   }
 
   /// <summary>
