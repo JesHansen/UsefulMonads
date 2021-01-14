@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 namespace UsefulMonads.Either
 {
@@ -158,6 +159,27 @@ namespace UsefulMonads.Either
       return isError ?
         new Either<TError, TMapped>(Failure.Value) :
         mapSucceeded(Ok.Value);
+    }
+
+    /// <summary>
+    /// Asynchronously transfer the inner <typeparamref name="TOk"/> value a new <see cref="Either{TError,TOk}"/> value.
+    /// </summary>
+    /// <typeparam name="TMapped">The return type of the new inner transformed value.</typeparam>
+    /// <param name="mapSucceeded">This callback is invoked if the wrapped value is a <typeparamref name="TOk"/> value. Must not be null.</param>
+    /// <returns>A new <see cref="Task"/> containing the transformed value.</returns>
+    public async Task<Either<TError, TMapped>> BindAsync<TMapped>(Func<TOk, Task<Either<TError, TMapped>>> mapSucceeded)
+    {
+      if (mapSucceeded == null)
+      {
+        throw new ArgumentNullException(nameof(mapSucceeded));
+      }
+
+      if (isError)
+      {
+        return new Either<TError, TMapped>(Failure.Value);
+      }
+
+      return await mapSucceeded(Ok.Value);
     }
 
     /// <summary>
