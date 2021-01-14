@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Reflection.Metadata.Ecma335;
+using System.Threading.Tasks;
 using FluentAssertions;
 using UsefulMonads.Either;
 using Xunit;
@@ -106,6 +108,32 @@ namespace Tests
         from r in sut2
         select s * r;
       q.Resolve(s => s.Length, i => i).Should().Be(126);
+    }
+
+    async Task<Either<bool, string>> GetSut(int delay)
+    {
+      var sut = new Either<bool, string>("AsyncValue ");
+      await Task.Delay(delay);
+      return sut;
+    }
+
+    [Fact]
+    public async Task TestAsyncSelect()
+    {
+      var q = from b1 in GetSut(10) select b1;
+      var result = await q;
+      result.Resolve(s => "", s => s).Should().Be("AsyncValue ");
+    }
+
+    [Fact]
+    public async Task TestAsyncSelectMany()
+    {
+      var q =
+        from b1 in GetSut(10)
+        from b2 in GetSut(10)
+        select b1 + b2;
+      var result = await q;
+      result.Resolve(s => "", s => s).Should().Be("AsyncValue AsyncValue ");
     }
 
   }
