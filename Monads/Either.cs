@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Threading.Tasks;
 
-namespace UsefulMonads.Either
+namespace Containers.Either
 {
 
   /// <summary>
@@ -30,6 +30,13 @@ namespace UsefulMonads.Either
     }
 
     /// <summary>
+    /// Factory method for creating a new instance of the <see cref="Either{TError,TOk}"/> type. Useful for then the left and right type cases coincide.
+    /// </summary>
+    /// <param name="ok">The <typeparamref name="TOk"/> value to wrap.</param>
+    /// <returns>An <see cref="Either{TError,TOk}"/> instance with the <paramref name="ok"/> value as a 'right' type.</returns>
+    public static Either<TError, TOk> FromOk(TOk ok) => new(ok);
+
+    /// <summary>
     /// Initializes a new instance of the <see cref="Either{TError,TOk}" /> class with a value of type <typeparamref name="TError"/>.
     /// </summary>
     /// <param name="failure">The value to be wrapped. Must be non-null.</param>
@@ -44,6 +51,13 @@ namespace UsefulMonads.Either
       Failure = new Lazy<TError>(() => failure);
       isError = true;
     }
+
+    /// <summary>
+    /// Factory method for creating a new instance of the <see cref="Either{TError,TOk}"/> type. Useful for then the left and right type cases coincide.
+    /// </summary>
+    /// <param name="error">The <typeparamref name="TError"/> value to wrap.</param>
+    /// <returns>An <see cref="Either{TError,TOk}"/> instance with the <paramref name="error"/> value as a 'left' type.</returns>
+    public static Either<TError, TOk> FromError(TError error) => new(error);
 
     private Lazy<TError> Failure { get; }
 
@@ -144,6 +158,21 @@ namespace UsefulMonads.Either
     }
 
     /// <summary>
+    /// Translates an <see cref="Either{TError,TOk}"/> instance to new values in both dimensions.
+    /// </summary>
+    /// <typeparam name="TNewError">The new 'left' type</typeparam>
+    /// <typeparam name="TMapped">The new 'right' type.</typeparam>
+    /// <param name="errorSelector">A map from <typeparamref name="TError"/> to <typeparamref name="TNewError"/>.</param>
+    /// <param name="okSelector">A map from <typeparamref name="TOk"/> to <typeparamref name="TMapped"/>.</param>
+    /// <returns>A new <see cref="Either{TNewError,TMapped}"/> instance where both the left and right cases has been mapped.</returns>
+    public Either<TNewError, TMapped> BiMap<TNewError, TMapped>(
+      Func<TError, TNewError> errorSelector,
+      Func<TOk, TMapped> okSelector)
+    {
+      return MapError(errorSelector).MapOk(okSelector);
+    }
+
+    /// <summary>
     /// Transform the inner <typeparamref name="TOk"/> value to a new <see cref="Either{TError,TOk}"/>.
     /// </summary>
     /// <typeparam name="TMapped">The return type of the new inner transformed value.</typeparam>
@@ -167,7 +196,7 @@ namespace UsefulMonads.Either
     /// <typeparam name="TMapped">The return type of the new inner transformed value.</typeparam>
     /// <param name="mapSucceeded">This callback is invoked if the wrapped value is a <typeparamref name="TOk"/> value. Must not be null.</param>
     /// <returns>A new <see cref="Task"/> containing the transformed value.</returns>
-    public async Task<Either<TError, TMapped>> BindAsync<TMapped>(Func<TOk, Task<Either<TError, TMapped>>> mapSucceeded)
+    public Task<Either<TError, TMapped>> BindAsync<TMapped>(Func<TOk, Task<Either<TError, TMapped>>> mapSucceeded)
     {
       if (mapSucceeded == null)
       {
@@ -176,10 +205,10 @@ namespace UsefulMonads.Either
 
       if (isError)
       {
-        return new Either<TError, TMapped>(Failure.Value);
+        return Task.FromResult(new Either<TError, TMapped>(Failure.Value));
       }
 
-      return await mapSucceeded(Ok.Value);
+      return mapSucceeded(Ok.Value);
     }
 
     /// <summary>

@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace UsefulMonads.Either
+namespace Containers.Either
 {
   /// <summary>
   /// Extension methods for the <see cref="Either{TError,TOk}"/> type.
@@ -58,7 +58,7 @@ namespace UsefulMonads.Either
       }
 
       return await (await source)
-        .BindAsync(ok => Task.FromResult(new Either<TError, TMapped>(selector(ok))));
+        .BindAsync(ok => Task.FromResult(Either<TError, TMapped>.FromOk(selector(ok))));
     }
 
     /// <summary>
@@ -118,7 +118,7 @@ namespace UsefulMonads.Either
 
       return source
         .Bind(x => eitherSelector(x)
-        .Bind(y => new Either<TError, TResult>(resultSelector(x, y))));
+        .Bind(y => Either<TError, TResult>.FromOk(resultSelector(x, y))));
     }
 
     /// <summary>
@@ -140,7 +140,7 @@ namespace UsefulMonads.Either
     {
       return await (await source)
         .BindAsync(async x => await (await eitherSelector(x))
-        .BindAsync(y =>Task.FromResult(new Either<TError, TResult>(resultSelector(x, y)))));
+        .BindAsync(y =>Task.FromResult(Either<TError, TResult>.FromOk(resultSelector(x, y)))));
     }
   }
 }

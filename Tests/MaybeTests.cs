@@ -1,7 +1,7 @@
 using System;
-using System.Threading.Channels;
+using System.Threading.Tasks;
 using FluentAssertions;
-using UsefulMonads.Maybe;
+using Containers.Maybe;
 using Xunit;
 using Xunit.Abstractions;
 
@@ -113,6 +113,41 @@ namespace Tests
         select s2 ? s3 * s1 : 0;
 
       q.Resolve(0, x => x).Should().BeApproximately(731.64, 0.0001);
+    }
+
+    async Task<Maybe<T>> CreateSut<T>(T value)
+    {
+      var def = value;
+      await Task.Delay(10);
+      return Maybe<T>.Create(def);
+    }
+
+    [Fact]
+    public async Task TestAsyncSelect()
+    {
+      var sut1 = CreateSut(42);
+
+      var q =
+        from s1 in sut1
+        select s1;
+      var r = await q;
+      
+    }
+
+    [Fact]
+    public async Task TestAsyncSelectMany()
+    {
+      var sut1 = CreateSut(42);
+      var sut2 = CreateSut(true);
+      var sut3 = CreateSut(17.42);
+
+      var q =
+        from s1 in sut1
+        from s2 in sut2
+        from s3 in sut3
+        select s2 ? s3 * s1 : 0;
+      var r = await q;
+      r.Resolve(0, x => x).Should().BeApproximately(731.64, 0.0001);
     }
 
     [Fact]

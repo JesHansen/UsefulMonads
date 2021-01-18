@@ -1,7 +1,8 @@
 ﻿using System;
+using System.Threading.Tasks;
 
 
-namespace UsefulMonads.Maybe
+namespace Containers.Maybe
 {
   /// <summary>
   /// Represents a value that may or may not be available
@@ -133,6 +134,16 @@ namespace UsefulMonads.Maybe
       return hasValue ? f(Value!) : Maybe<R>.Empty;
     }
 
+    public Task<Maybe<R>> BindAsync<R>(Func<T, Task<Maybe<R>>> f)
+    {
+      if (f == null)
+      {
+        throw new ArgumentNullException(nameof(f));
+      }
+
+      return hasValue ? f(Value!) : Task.FromResult(Maybe<R>.Empty);
+    }
+
     /// <summary>
     /// LINQ query syntax.
     /// </summary>
@@ -158,7 +169,6 @@ namespace UsefulMonads.Maybe
             ? maybeSelector(Value!).Bind(r => new Maybe<F>(resultSelector(Value!, r)))
             : Maybe<F>.Empty;
     }
-
 
     /// <inheritdoc />
     public override bool Equals(object? obj)
@@ -207,5 +217,53 @@ namespace UsefulMonads.Maybe
     /// Wraps the given value in a Maybe for that type
     /// </summary>
     public static Maybe<T> ToMaybe<T>(this T input) => Maybe<T>.Create(input);
+
+    /// <summary>
+    /// Async version for LINQ query syntax.
+    /// </summary>
+    /// <typeparam name="T">The type of the value (if present) contained in the <see cref="Maybe{T}"/> instance.</typeparam>
+    /// <typeparam name="R">The type of the intermediary value (if present) contained in the <see cref="Maybe{R}"/> instance.</typeparam>
+    /// <typeparam name="F">The type of the value (if present) contained in the resulting <see cref="Maybe{F}"/> instance.</typeparam>
+    /// <param name="source">An instance of <see cref="Maybe{T}"/>.</param>
+    /// <param name="maybeSelector">A mapping from a <typeparamref name="T"/> value to a <see cref="Task{R}"/> value.</param>
+    /// <param name="resultSelector">A mapping taking a <typeparamref name="T"/> value and a <typeparamref name="R"/> value, producing an <typeparamref name="F"/> value.</param>
+    /// <returns>An operation that eventually contains a <see cref="Maybe{F}"/> value after it completes.</returns>
+    public static async Task<Maybe<F>> SelectMany<T, R, F>(
+      this Task<Maybe<T>> source,
+      Func<T, Task<Maybe<R>>> maybeSelector,
+      Func<T, R, F> resultSelector)
+    {
+      if (maybeSelector == null)
+      {
+        throw new ArgumentNullException(nameof(maybeSelector));
+      }
+
+      if (resultSelector == null)
+      {
+        throw new ArgumentNullException(nameof(resultSelector));
+      }
+
+      return await (await source)
+        .BindAsync(async x => await (await maybeSelector(x))
+        .BindAsync(y => Task.FromResult(Maybe<F>.Create(resultSelector(x, y)))));
+    }
+
+    /// <summary>
+    /// Async version of <see cref="Maybe{T}.Select"/>.
+    /// </summary>
+    /// <typeparam name="T">The type of the value (if present) contained in the <see cref="Maybe{T}"/> instance.</typeparam>
+    /// <typeparam name="R">>The type of the value (if present) contained in the resulting <see cref="Maybe{R}"/> instance.</typeparam>
+    /// <param name="source">An instance of <see cref="Maybe{T}"/>.</param>
+    /// <param name="selector">A mapping from a <typeparamref name="T"/> value to an <typeparamref name="R"/> value.</param>
+    /// <returns></returns>
+    public static async Task<Maybe<R>> Select<T, R>(this Task<Maybe<T>> source, Func<T, R> selector)
+    {
+      if (selector == null)
+      {
+        throw new ArgumentNullException(nameof(selector));
+      }
+
+      return (await source).Map(selector);
+    }
   }
 }
